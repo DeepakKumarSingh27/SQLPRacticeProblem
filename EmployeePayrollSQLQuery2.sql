@@ -1066,6 +1066,244 @@ BEGIN
     END;
 END;
 
+/*Queries for Cursors:*/
+--1Query using a cursor to fetch and display all employees' names
+
+CREATE TABLE tblProducts(id int primary key,Name varchar(20),Description varchar(49))
+INSERT INTO tblProducts(id,Name,Description)
+VALUES
+(1,'product-1','product-1 Description'),
+(2,'product-2','product-2 Description'),
+(3,'product-3','product-3 Description'),
+(4,'product-4','product-4 Description'),
+(5,'product-5','product-5 Description');
+
+CREATE TABLE tblProductSales(id int primary key,productid int,UnitPrice int,QuantitySold int)
+
+INSERT INTO tblProductSales(id,productid,UnitPrice,QuantitySold)
+values
+(1,5,5,3),
+(2,4,23,4),
+(3,3,31,2),
+(4,4,93,9),
+(5,5,72,5);
+drop table tblProductSales
+
+select * from tblProducts
+select * from tblProductSales
+create table Student_details(Rollno int primary key,Student_Name varchar(20),Class varchar(10),Marks_Science int,Marks_Math int,Marks_Eng int)
+
+
+insert into Student_details(Rollno,Student_Name,Class,Marks_Science,Marks_Math,Marks_Eng)
+values
+(6,'Geeta','8th',21,65,43);
+
+select * from Student_details
+
+Declare @RollNo int,
+@Student_Name varchar(100),
+@Marks_Science int,
+@Marks_Eng int,
+@Marks_Math int
+Declare
+@Marks_Total int,
+@percentage int
+Declare student_cursor Cursor for Select RollNo,Student_Name,Marks_Sceince,Marks_Eng,Marks_Math,
+from Student_details;
+
+open Student_cursor;
+Fetch Next from student_cursor INTO @RollNo,@Student_Name,@Marks_Science,@Marks_Eng,@Marks_Math
+While @@FETCH_STATUS = 0
+BEgin
+print ConCat('Name: ',@Student_Name);
+print Concat('Roll no: ',@RollNo);
+print Concat('Science: ',@Marks_Sceince);
+print Concat('Math: ',@Marks_Math);
+print Concat('English: ',@Marks_Eng);
+Set @Marks_Total= @Marks_Science+@Marks_Math+@Marks_Eng;
+print Concat('Total: ',@Marks_Total);
+
+set @percentage= @Marks_Total/3;
+Set @percentage=@Marks_Total/3;
+print Concat('percentage: ',@percentage,'%');
+IF @percentage > 80
+BEgIN
+print 'Grade: A'
+END
+ELSE IF @percentage > 60 AND @percentage < 80
+print 'Grade: B';
+END
+ELSE
+print 'Grade: C';
+END
+print'=================';
+FETCH NEXT student_cursor INTO
+@RollNo,@Student_Name,@Marks_Science,@Marks_End,@Marks_Math
+END
+Close student_cursr;
+Deallocate student_cursor
+--1Query using a cursor to fetch and display all employees' names
+DECLARE @EmployeeName VARCHAR(100)
+
+DECLARE EmployeeCursor CURSOR FOR
+SELECT FirstName FROM Employee
+
+OPEN EmployeeCursor
+FETCH NEXT FROM EmployeeCursor INTO @EmployeeName
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    PRINT @EmployeeName
+    FETCH NEXT FROM EmployeeCursor INTO @EmployeeName
+END
+
+CLOSE EmployeeCursor
+DEALLOCATE EmployeeCursor
+Select * from Employee
+
+--2 Query using a cursor to update the basic salary of all employees by a certain percentage
+DECLARE @EmployeeID INT
+DECLARE @NewSalary DECIMAL(18, 2)
+DECLARE @PercentageIncrease DECIMAL(18, 2) = 10 -- Set the percentage increase here
+
+DECLARE SalaryCursor CURSOR FOR
+SELECT EmployeeID, BaseSalary FROM Salary
+
+OPEN SalaryCursor
+FETCH NEXT FROM SalaryCursor INTO @EmployeeID, @NewSalary
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    SET @NewSalary = @NewSalary + (@NewSalary * (@PercentageIncrease / 100))
+    
+    UPDATE Salary
+    SET BaseSalary = @NewSalary
+    WHERE EmployeeID = @EmployeeID
+
+    FETCH NEXT FROM SalaryCursor INTO @EmployeeID, @NewSalary
+END
+
+CLOSE SalaryCursor
+DEALLOCATE SalaryCursor
+select * from Salary
+--3 Query using a cursor to delete all employees who have left the organization
+DECLARE @EmployeeID INT
+
+DECLARE EmployeeCursor CURSOR FOR
+SELECT EmployeeID FROM Employee WHERE EmployeeID = 1 -- Assuming 'HasLeft' indicates employees who have left
+
+OPEN EmployeeCursor
+FETCH NEXT FROM EmployeeCursor INTO @EmployeeID
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    DELETE FROM Employee WHERE EmployeeID = @EmployeeID
+
+    FETCH NEXT FROM EmployeeCursor INTO @EmployeeID
+END
+
+CLOSE EmployeeCursor
+DEALLOCATE EmployeeCursor
+select * from Employee
+--
+-- Create the Product Table
+CREATE TABLE Product
+(
+  ProductID INT PRIMARY KEY, 
+  Name VARCHAR(40), 
+  Price INT,
+  Quantity INT
+ )
+ GO
+
+ -- Populate the Product Table with some test data
+ INSERT INTO Product VALUES(101, 'Laptop', 15000, 100)
+ INSERT INTO Product VALUES(102, 'Desktop', 20000, 150)
+ INSERT INTO Product VALUES(103, 'Mobile', 3000, 200)
+ INSERT INTO Product VALUES(104, 'Tablet', 4000, 250)
+
+ -- Create the ProductSales table
+CREATE TABLE ProductSales
+(
+  ProductSalesId INT PRIMARY KEY,
+  ProductId INT,
+  QuantitySold INT
+) 
+GO
+
+-- Populate the ProductSales table with some test data
+INSERT INTO ProductSales VALUES(1, 101, 10)
+INSERT INTO ProductSales VALUES(2, 102, 15)
+INSERT INTO ProductSales VALUES(3, 103, 30)
+INSERT INTO ProductSales VALUES(4, 104, 35)
+GO
+CREATE PROCEDURE spSellProduct
+@ProductID INT,
+@QuantityToSell INT
+AS
+BEGIN
+  -- First we need to check the stock available for the product we want to sell
+  DECLARE @StockAvailable INT
+
+  SELECT @StockAvailable = Quantity
+  FROM Product 
+  WHERE ProductId = @ProductId
+
+  -- We need to throw an error to the calling application 
+  -- if the stock is less than the quantity we want to sell
+  IF(@StockAvailable< @QuantityToSell)
+  BEGIN
+    Raiserror('Enough Stock is not available',16,1)
+  END
+  -- If enough stock is available
+  ELSE
+  BEGIN
+    BEGIN TRY
+      -- We need to start the transaction
+      BEGIN TRANSACTION
+
+      -- First we need to reduce the quantity available
+      UPDATE Product SET 
+          Quantity = (Quantity - @QuantityToSell)
+      WHERE ProductID = @ProductID
+
+      -- Calculate MAX ProductSalesId
+      DECLARE @MaxProductSalesId INT
+      SELECT @MaxProductSalesId = CASE 
+          WHEN MAX(ProductSalesId) IS NULL THEN 0 
+          ELSE MAX(ProductSalesId) 
+          END 
+      FROM ProductSales
+
+      -- Increment @MaxProductSalesId by 1, so we don't get a primary key violation
+      Set @MaxProductSalesId = @MaxProductSalesId + 1
+
+      -- We need to insert the quantity sold into the ProductSales table
+      INSERT INTO ProductSales(ProductSalesId, ProductId, QuantitySold)
+      VALUES(@MaxProductSalesId, @ProductId, @QuantityToSell)
+
+      -- Finally Commit the transaction
+      COMMIT TRANSACTION
+    END TRY
+    BEGIN CATCH
+      ROLLBACK TRANSACTION
+    END CATCH
+  End
+END
+
+
+use Employee_payroll
+
+select * from Employee 
+select * from Leaves
+
+
+
+
+
+
+
+
 
 
 
