@@ -737,3 +737,337 @@ Declare @Exist int
 Execute @Exist = CheckEmployeeExistence 1001;
 print @Exist
 
+/*Functions*/
+--Query using the CalculateAge function to retrieve the age of employees
+select EmployeeID from Employee;
+--Query using a custom function to calculate the total salary for an employee
+CREATE PROC calculateTotalSalary1
+as
+begin 
+Select Sum(BaseSalary) from Salary;
+END;
+calculateTotalSalary1
+
+--Query using a function to get the number of employees in a specific department
+select Count(DepartmentID) 
+from Department
+where DepartmentName = 'Accounting';
+select * from Department
+--Query using a function to get the number of leaves taken by an employee
+select * from Leaves
+select count(EmployeeID)
+from Leaves
+-- views
+-- theory ->
+/*Views in SQL are kind of virtual tables. A view also has rows and columns as they are in a real table in the database.
+We can create a view by selecting fields from one or more tables present in the database.
+A View can either have all the rows of a table or specific rows based on certain condition.
+In this article we will learn about creating , deleting and updating Views. 
+Sample Tables:
+example of views->
+CREATE VIEW DetailsView AS
+SELECT NAME, ADDRESS
+FROM StudentDetails
+WHERE S_ID < 5;
+execution of view ->
+SELECT * FROM DetailsView;
+CREATE VIEW StudentNames AS
+SELECT S_ID, NAME
+FROM StudentDetails
+ORDER BY NAME;
+SELECT * FROM StudentNames;
+Creating View from multiple tables: In this example we will create a View named MarksView from two tables StudentDetails and StudentMarks. 
+To create a View from multiple tables we can simply include multiple tables in the SELECT statement. Query:
+CREATE VIEW MarksView AS
+SELECT StudentDetails.NAME, StudentDetails.ADDRESS, StudentMarks.MARKS
+FROM StudentDetails, StudentMarks
+WHERE StudentDetails.NAME = StudentMarks.NAME;
+To display data of View MarksView:
+SELECT * FROM MarksView;
+LISTING ALL VIEWS IN A DATABASE
+
+We can list View using the SHOW FULL TABLES statement or using the information_schema table. 
+A View can be created from a single table or multiple tables. 
+
+Syntax (Using SHOW FULL TABLES):
+
+use "database_name";
+show full tables where table_type like "%VIEW";
+Syntax (Using information_schema) :
+
+select * from information_schema.views where table_schema = "database_name";
+
+*/
+
+select * from Employee
+CREATE TABLE emp(id int,EmpName varchar(20),City varchar(20),salary int)
+insert into emp(id,EmpName,City,salary)
+values
+(1,'Tom','ABC',7000),
+(2,'Emma','PQR',8000),
+(3,'jeni','ZYW',500),
+(4,'David','FGH',7500),
+(5,'Henry','PQR',9500),
+(6,'Will','ABC',6700);
+
+CREATE VIEW [EmployeeABC] AS
+select EmpName,City
+from emp
+where City = 'ABC';
+
+select * from EmployeeABC
+
+CREATE VIEW [SalaryAbove] AS
+select EmpName,City,salary
+from emp
+where salary > 7000;
+
+select * from SalaryAbove
+
+drop view SalaryAbove
+/*Index*/
+CREATE TABLE Employees1(id int,Name varchar(20),Gender varchar(20),salary int)
+
+insert into Employees1(id,Name,Gender,salary)
+values
+(1,'Sam','Male',2500),
+(2,'Pam','Femal',6500),
+(3,'John','Male',4500),
+(4,'Sara','Femal',5500),
+(5,'Todda','male',3100),
+(6,'Will','male',6700);
+select * from Employees1
+
+select * from tblEmployees
+
+create index IX_tblEmployees_salary
+On tblEmployees (salary ASC)
+sp_Helpindex tblEmployees
+drop index tblEmployees.IX_tblEmployees_salary
+
+
+exec sp_Helpindex tblEmployees
+
+create index IX_tblEmployees_Gender_salary
+On tblEmployees (Gender DESC,salary ASC)
+
+/* index practice problems
+Query using the IX_Employee_EmployeeID index to retrieve an employee by their ID
+*/
+CREATE INDEX IX_EmpByID
+ON Employee(EmployeeID)
+IX_EmpByID
+--Query using an index on the StartDate column to improve performance in searching for leaves within a specific date range
+
+Select * from Leaves
+
+
+CREATE INDEX IXSearch_date
+ON 
+ Leaves( StartDate '2022-8-09' AND '2020-10-10');
+ CREATE INDEX IX_Leave_StartDate ON Leave (StartDate);
+
+CREATE INDEX IX_Leave_StartDate ON Leaves (StartDate);
+
+--Query using an index on the DepartmentID column to optimize filtering employees by their department
+CREATE INDEX IXDepartmentID
+On Department(DepartmentID)
+select * from Department
+
+--Query using an index on the NetSalary column to speed up searching for employees with specific salary ranges
+
+CREATE INDEX IX_NetSalary
+ON Salary(BaseSalary)
+select * from Employee
+--Query using an index on the DesignationName column to quickly search for employees with a specific job designation
+CREATE INDEX IXDesignationID
+ON Designation(DesignationName)
+
+select * from Designation
+/*Views practice problem*/
+--Query using the EmployeeDetails view to get employee details along with department and manager information
+select * from Employee
+CREATE VIEW [EmployeeDetails1] AS
+select EmployeeID,DesignationID,DepartmentID
+from Employee
+
+
+CREATE VIEW [SalaryAbove] AS
+select EmpName,City,salary
+from emp
+where salary > 7000;
+
+select * from EmployeeDetails1
+
+--Query using a view to get employees who have taken leaves within a specific date range
+CREATE VIEW [CountLeavs] AS
+SELECT EmployeeID
+from Leaves
+where StartDate between '2022-08-09' AND '2022-08-10';
+
+
+select * from CountLeavs
+
+--Query using a view to get employees with their respective department and designation names
+
+select * from EMpDetails
+CREATE VIEW EMpDetails AS
+Select DepartmentID,DepartmentName
+from Department
+
+--Query using a view to get employees who are managers along with their department names
+select * from DETAILSEMP1
+CREATE VIEW DETAILSEMP1 AS
+SELECT ManagerID,DepartmentName
+from Department
+
+/*Subqueries*/
+--Query to get employees who have salaries greater than the average salary in their department
+select * from Salary
+select * from Department
+select BaseSalary
+from  Salary
+where BaseSalary > (select Avg(BaseSalary)
+                      from Salary);
+
+--Query to retrieve employees who have taken leaves longer than the average leave duration
+Select * from Leaves
+SELECT e.EmployeeID, e.FirstName, e.LastName, SUM(DATEDIFF(DAY, l.StartDate, l.EndDate) + 1) AS TotalLeaveDays
+FROM Employee e
+JOIN Leaves l ON e.EmployeeID = l.EmployeeID
+GROUP BY e.EmployeeID, e.FirstName, e.LastName
+HAVING SUM(DATEDIFF(DAY, l.StartDate, l.EndDate) + 1) > (
+    SELECT AVG(DATEDIFF(DAY, StartDate, EndDate) + 1)
+    FROM Leaves
+)
+
+--Query to get employees whose salary is within 10% of the highest salary in their department
+
+select MAX(BaseSalary) * 0.01
+from Salary
+where BaseSalary >= (SELECT BaseSalary
+                     FROM Salary
+                     );
+select * from Salary
+
+SELECT s.EmployeeID, s.BaseSalary, s.SalaryId
+FROM Salary s
+WHERE s.BaseSalary >= 0.9 * (
+    SELECT MAX(s2.BaseSalary)
+    FROM Salary s2
+    WHERE s2.SalaryId = s.SalaryId
+);
+
+/*Queries for Triggers:
+Trigger to automatically update the HireDate of an employee when their record is inserted*/
+
+select * from tblEmployees
+
+CREATE table tbleEmployee(id int,Name varchar(20),Salary int,Gender varchar(20),Department int)
+insert into tbleEmployee(id,Name,Salary,Gender,Department)
+values
+(1,'john',5000,'male',3),
+(2, 'Emily', 60000, 'Female', 102),
+    (3, 'David', 55000, 'Male', 101),
+    -- Add more rows as needed
+    (4, 'Sophia', 58000, 'Female', 103);
+
+	create table tblEmployeeAudit(id int, AuditDate Date)
+create trigger tr_tblEmployee_forInsert
+ON tblEmployee
+for insert
+AS
+BEgin
+Declare @Id int,
+Declare @Id = Id from Inseted
+insert into tblEmployeeAudit
+values('New employee with Id = ' + CAST(@Id as nvarchar(5)) + 'is added at '+CAST()
+
+
+CREATE TABLE [dbo].[Employee1](
+[Emp_ID] [int] IDENTITY(1,1) primary key,
+[Emp_name][varchar](100) NOT NULL,
+[EMP_Sal][decimal](10,2) NOT NULL,
+[Emp_DOB][datetime]NOT NULL,
+[Emp_Experince][int] NOT NULL,
+[Record_DateTime][datetime]Not Null);
+select * from Employee1
+
+CREATE TRIGGER [dbo].[trigerAfterInsert] ON[dbo]. [Employee1]
+AFTER INSERT
+AS
+declare @emp_dob varchar(20);
+declare @Age INT;
+declare @Emp_Experience INT;
+select @emp_dob=i.Emp_DOB from inserted i;
+select @Emp_Experience=i.Emp_Experince from inserted i;
+set @Age=YEAR(GETDATE()) - YEAR(@emp_dob);
+IF @Age > 25
+BEGIN
+Print 'Not Eligible: Age is greater than 25'
+RollBack
+END
+ELSE IF @Emp_Experience < 5
+BEGIN
+Print 'Not Eligible: Experience is less than 5'
+RollBack
+END
+ELSE
+print 'Employee details inserted successfully';
+END
+--Trigger to automatically update the HireDate of an employee when their record is inserted
+
+CREATE TRIGGER trg_UpdateHireDate
+ON Employee
+AFTER INSERT
+AS
+BEGIN
+    UPDATE Employee
+    SET HireDate = GETDATE() -- Assuming HireDate is a DATETIME column
+    WHERE EmployeeID IN (SELECT EmployeeID FROM inserted);
+END;
+select * from Employee
+--Trigger to update the ModifiedDate of an employee when their record is updated
+
+CREATE TRIGGER trg_UpdateModifiedDate
+ON Employee
+AFTER UPDATE
+AS
+BEGIN
+    UPDATE Employee
+    SET DateOfBirth = GETDATE() 
+    WHERE EmployeeID IN (SELECT EmployeeID FROM inserted);
+END;
+
+--Trigger to delete salary records of an employee when they are deleted from the Employee table
+CREATE TRIGGER trg_DeleteSalaryRecords
+ON Salary
+AFTER DELETE
+AS
+BEGIN
+    DELETE FROM Salary
+    WHERE EmployeeID IN (SELECT SalaryId FROM deleted);
+END;
+
+--Trigger to enforce a constraint where the EndDate of a leave must be greater than or equal to the StartDate
+select * from Leaves
+
+CREATE TRIGGER trg_EnforceEndDateConstraint
+ON Leaves
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    IF EXISTS (
+        SELECT * FROM inserted WHERE EndDate < StartDate
+    )
+    BEGIN
+        RAISERROR ('EndDate must be greater than or equal to StartDate', 16, 1)
+        ROLLBACK TRANSACTION;
+    END;
+END;
+
+
+
+
+
+
